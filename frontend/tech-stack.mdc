@@ -1,0 +1,27 @@
+---
+alwaysApply: true
+---
+
+# Tech Stack
+
+Approved technologies for the Next.js frontend. **NEVER** introduce alternatives without updating this file first.
+
+## Stack Overview
+
+| Layer          | Technology                            | Rule file                                  |
+| -------------- | ------------------------------------- | ------------------------------------------ |
+| Framework      | Next.js (App Router)                  | `nextjs.mdc`                               |
+| Language       | TypeScript                            | `naming-conventions.mdc`                   |
+| Architecture   | Feature-based modules                 | `architecture.mdc`                         |
+| HTTP client    | Axios                                 | `api-services.mdc`                         |
+| Server state   | TanStack Query (React Query)          | `state-management.mdc`                     |
+| Client state   | Zustand                               | `state-management.mdc`                     |
+| Forms          | react-hook-form                       | `forms-validation.mdc`                     |
+| Validation     | Zod (shared package)                  | `api-services.mdc`, `forms-validation.mdc` |
+| Authentication | better-auth client → Backend          | `authentication.mdc`                       |
+| Authorization  | CASL (`@casl/ability`, `@casl/react`) | `authorization.mdc`                        |
+| UI components  | shadcn/ui                             | `components.mdc`, `styling.mdc`            |
+| Styling        | Tailwind CSS                          | `styling.mdc`                              |
+| Icons          | Lucide React                          | `styling.mdc`                              |
+| Theming        | next-themes                           | `styling.mdc`                              |
+| Testing        | Playwright (+ `@axe-core/playwright`) | `testing.mdc`                              |
