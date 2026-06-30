@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Playwright E2E testing conventions
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Testing: Playwright

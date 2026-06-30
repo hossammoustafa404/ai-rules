@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Frontend security practices and client-side boundaries
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Security

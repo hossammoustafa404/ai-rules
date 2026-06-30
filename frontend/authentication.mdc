@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Frontend better-auth client integration and session handling
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Authentication: better-auth
@@ -15,7 +17,7 @@ features/
 └── auth/
     ├── index.ts
     ├── components/     # login-form.tsx, sign-up-form.tsx, etc.
-    ├── screens/        # sign-in-screen.tsx, sign-up-screen.tsx
+    ├── views/          # sign-in-view.tsx, sign-up-view.tsx
     ├── hooks/
     └── services/       # Session fetch for Server Components
 ```

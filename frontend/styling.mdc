@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Tailwind CSS and Lucide icon usage
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Styling: Tailwind CSS + Lucide Icons

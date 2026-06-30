@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Frontend CASL ability checks and permission UI
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Authorization: CASL

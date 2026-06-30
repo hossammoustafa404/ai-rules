@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Approved frontend technologies and libraries
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Tech Stack

@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Form architecture with react-hook-form, Zod, and shadcn/ui
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Forms & Validation: react-hook-form + Zod + shadcn/ui

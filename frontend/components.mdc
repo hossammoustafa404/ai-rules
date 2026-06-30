@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: React component design and composition rules
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Component Design

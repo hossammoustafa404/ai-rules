@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Next.js App Router patterns and server/client component discipline
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # Next.js App Router Discipline

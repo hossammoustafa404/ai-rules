@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: Universal naming conventions for files, symbols, and database
+globs: **/*.ts, **/*.tsx
+alwaysApply: false
 ---
 
 # Naming Conventions
@@ -30,7 +32,7 @@ Strict naming rules for **all packages** — frontend, backend, shared libraries
 |---|---|---|
 | Directories / feature folders | `kebab-case` | `features/user-profile/` |
 | React components | `kebab-case.tsx` | `user-card.tsx` |
-| Screens (page-level components) | `kebab-case` + `-screen` suffix | `users-screen.tsx`, `sign-in-screen.tsx` |
+| Views (page-level components) | `kebab-case` + `-view` suffix | `users-view.tsx`, `sign-in-view.tsx` |
 | Hooks | `kebab-case` + `use-` prefix | `use-user-form.ts` |
 | Stores (Zustand) | `kebab-case` + `use-` prefix + `-store` | `use-user-store.ts` |
 | Utilities, services, config | `kebab-case.ts` | `define-ability.ts`, `auth-client.ts` |
@@ -48,11 +50,11 @@ Strict naming rules for **all packages** — frontend, backend, shared libraries
 - Feature folder: `kebab-case` matching the domain — `features/users/`, `features/order-items/`.
 - Root files inside a feature: `constants.ts`, `types.ts`, `utils.ts` — fixed names, lowercase.
 
-### Components & Screens
+### Components & Views
 
 - Filenames are `kebab-case`. Export names are `PascalCase`.
 - Component: `user-card.tsx` → `export function UserCard`.
-- Screen: `users-screen.tsx` → `export function UsersScreen`. Always use `-screen` suffix in the filename.
+- View: `users-view.tsx` → `export function UsersView`. Always use `-view` suffix in the filename. Views live in `features/{name}/views/` and are composed by `app/**/page.tsx`.
 - Provider: `ability-provider.tsx` → `export function AbilityProvider`.
 
 ### Hooks
@@ -84,34 +86,39 @@ Strict naming rules for **all packages** — frontend, backend, shared libraries
 
 | Kind | Case | Example |
 |---|---|---|
-| Module | `PascalCase` + `Module` | `UsersModule` |
-| Controller | `PascalCase` + `Controller` | `UsersController` |
-| Service | `PascalCase` + `Service` | `UsersService` |
-| Guard / Interceptor / Pipe | `PascalCase` + kind | `JwtAuthGuard` |
-| Module file | `kebab-case.module.ts` | `users.module.ts` |
-| Controller file | `kebab-case.controller.ts` | `users.controller.ts` |
-| Service file | `kebab-case.service.ts` | `users.service.ts` |
-| Entity file | `kebab-case.entity.ts` | `user.entity.ts` |
+| Module | `PascalCase` + `Module` (singular) | `UserModule` |
+| Controller | `PascalCase` + `Controller` (singular) | `UserController` |
+| Action service | `PascalCase` verb + resource + `Service` | `FindOneUserService` |
+| Guard / Interceptor / Pipe | `PascalCase` + kind | `CanUpdateUserGuard` |
+| Module file | `kebab-case.module.ts` (singular) | `user.module.ts` |
+| Controller file | `kebab-case.controller.ts` (singular) | `user.controller.ts` |
+| Action service folder | `{verb}-{resource}/` | `find-one-user/` |
+| Action service file | `{verb}-{resource}.service.ts` | `find-one-user/find-one-user.service.ts` |
+| Controller spec | colocated beside controller | `user.controller.spec.ts` |
 | DTO file | `kebab-case.dto.ts` or verb-based | `create-user.dto.ts` |
 | DTO class | `PascalCase` + `Dto` | `CreateUserDto` |
-| Entity class | `PascalCase` singular | `User`, `OrderItem` |
 
-- Feature/module folder: `kebab-case` plural or domain name — `users/`, `order-items/`.
-- REST route paths: `kebab-case`, plural nouns — `/users`, `/order-items`.
+- Feature/module folder: `kebab-case`, **singular** — `user/`, `order-item/`.
+- REST route paths: `kebab-case`, plural nouns — `/users`, `/order-items` (route plural, module singular).
 - Route handler methods: match HTTP verb intent — `findAll`, `findOne`, `create`, `update`, `remove`.
+- Action service method: `execute()` — one public entry point per service.
+- Unit test file: colocated in the same folder as source — `find-one-user/find-one-user.service.spec.ts`, `user.controller.spec.ts`.
+- Shared infra: `shared/config/`, `shared/prisma/` — not inside feature modules.
 
 ## Shared Schemas (Zod)
 
 | Kind | Case | Example |
 |---|---|---|
 | Schema export | `PascalCase` + `Schema` suffix | `LoginSchema`, `UserSchema` |
+| Meta example export | `PascalCase` + `Example` suffix | `CreateUserExample`, `UserExample` |
 | Inferred type export | `PascalCase` + `Input` / domain noun | `LoginInput`, `User` |
 | Partial/update schemas | verb or context prefix | `UpdateUserSchema`, `UpdateUserInput` |
 
-- Schema and its inferred type export live in the **same file**.
+- Schema, inferred type, and `*Example` export live in the **same file**.
 - **NEVER** use `camelCase` for schema names — `LoginSchema`, not `loginSchema`.
 - **NEVER** suffix types with `Schema` — `LoginInput`, not `LoginSchemaType`.
 - **NEVER** define parallel interfaces for the same shape as a schema.
+- **NEVER** ship a request/response schema without a `*Example` meta object. See `api-docs.mdc`.
 
 ## Database
 
@@ -139,14 +146,14 @@ Strict naming rules for **all packages** — frontend, backend, shared libraries
 
 ## Tests
 
-- Unit/integration: `{source-name}.spec.ts` colocated or in `__tests__/`.
+- Unit/integration: `{source-name}.spec.ts` colocated beside source. Backend: **always** colocated — no `__tests__/`.
 - E2E: `e2e/{feature}/{flow}.spec.ts` — `e2e/auth/login-flow.spec.ts`.
 - Test description: behavior-driven — `it("should reject invalid email")`, not `it("test 1")`.
 - Factory/fixture helpers: `create` + noun — `createUser`, `createMockSession`.
 
 ## Imports & Exports
 
-- Path aliases: `@/` for app root. Workspace packages use `@<project>/` — the monorepo project scope (e.g. `@stack/schemas` for a project named `stack`).
+- Path aliases: `@/` for app root (per-app, not workspace-wide). Workspace packages use `@<scope>/{package}` — e.g. `@stack/schemas`. See `monorepo.mdc`.
 - **NEVER** use generic scopes like `@repo/`.
 - Named exports by default. Default exports only for Next.js `page.tsx` / `layout.tsx` requirements.
 - Barrel re-exports use named exports — `export { UserCard } from "./user-card"`.

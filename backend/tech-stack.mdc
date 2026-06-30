@@ -1,0 +1,26 @@
+---
+description: Approved backend technologies and libraries
+globs: apps/app-server/**/*
+alwaysApply: false
+---
+
+# Tech Stack
+
+Approved technologies for the NestJS backend. **NEVER** introduce alternatives without updating this file first.
+
+## Stack Overview
+
+| Layer          | Technology                             | Rule file                |
+| -------------- | -------------------------------------- | ------------------------ |
+| Framework      | NestJS                                 | `nestjs.mdc`             |
+| Language       | TypeScript                             | `naming-conventions.mdc` |
+| Architecture   | Feature modules + `shared/` infra      | `architecture.mdc`       |
+| Database       | PostgreSQL + Prisma (`shared/prisma/`) | `database.mdc`           |
+| Validation     | Zod (shared package) + `nestjs-zod`    | `validation.mdc`         |
+| Authentication | `@thallesp/nestjs-better-auth`         | `authentication.mdc`     |
+| Authorization  | CASL (`@casl/ability`)                 | `authorization.mdc`      |
+| API            | REST (JSON) — any HTTP client          | `controllers.mdc`        |
+| API docs       | `@nestjs/swagger` + better-auth `openAPI()` | `api-docs.mdc`         |
+| Config         | `@nestjs/config` (`shared/config/`)    | `nestjs.mdc`             |
+| Logging        | NestJS built-in `Logger`               | `nestjs.mdc`             |
+| Testing        | Jest + Supertest                       | `testing.mdc`            |

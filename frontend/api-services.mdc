@@ -1,5 +1,7 @@
 ---
-alwaysApply: true
+description: API service layer, fetchers, and React Query integration
+globs: apps/app-client/**/*, apps/app-admin/**/*
+alwaysApply: false
 ---
 
 # API & Services

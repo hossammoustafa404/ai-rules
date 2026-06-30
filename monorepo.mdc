@@ -1,0 +1,192 @@
+---
+description: Nx monorepo layout, apps, packages, and module boundaries
+globs: apps/**/*, packages/**/*, nx.json, package.json, tsconfig*.json
+alwaysApply: false
+---
+
+# Monorepo: Nx
+
+The codebase is an **Nx monorepo**. Nx orchestrates builds, tests, and lint across apps and packages with caching and [module boundary enforcement](https://nx.dev/docs/features/enforce-module-boundaries). See the [Nx docs](https://nx.dev/docs/getting-started/intro).
+
+## Workspace Layout
+
+```text
+/
+├── apps/
+│   ├── app-client/           # Next.js — public/client-facing UI — see frontend/
+│   ├── app-admin/            # Next.js — internal admin dashboard — see frontend/
+│   └── app-server/           # NestJS — REST API — see backend/
+├── packages/
+│   └── schemas/              # @stack/schemas — shared Zod schemas, types, *Example
+├── nx.json
+├── package.json              # Root workspace scripts only — no app logic
+└── tsconfig.base.json        # Path mappings for all projects
+```
+
+| Path               | Nx project   | Import name         | Purpose                       |
+| ------------------ | ------------ | ------------------- | ----------------------------- |
+| `apps/app-client`  | `app-client` | `@/` (app-internal) | Client-facing Next.js app     |
+| `apps/app-admin`   | `app-admin`  | `@/` (app-internal) | Admin dashboard Next.js app   |
+| `apps/app-server`  | `app-server` | `@/` (app-internal) | NestJS API server             |
+| `packages/schemas` | `schemas`    | `@stack/schemas`    | Shared contracts for all apps |
+
+- **NEVER** put application code at the workspace root.
+- **NEVER** create `libs/` at root unless matching an existing Nx layout — prefer `packages/` for shared code.
+- Add new shared code as `packages/{name}` — not duplicated inside `apps/`.
+- `app-client` and `app-admin` are separate Next.js apps — **NEVER** merge them into one project.
+
+## Apps Overview
+
+| App          | Stack   | Rule files  | Talks to                    |
+| ------------ | ------- | ----------- | --------------------------- |
+| `app-client` | Next.js | `frontend/` | `app-server` over HTTP      |
+| `app-admin`  | Next.js | `frontend/` | `app-server` over HTTP      |
+| `app-server` | NestJS  | `backend/`  | Database, external services |
+
+- Both frontends share the same stack conventions (`frontend/`) but have independent codebases, routes, and deployments.
+- `app-admin` is for internal operators — stricter auth/authorization expectations; still follows `frontend/authentication.mdc` and `frontend/authorization.mdc`.
+- **NEVER** share feature code between `app-client` and `app-admin` via direct imports — extract to `packages/` if truly shared.
+
+## Dependency Direction
+
+```text
+app-client  ──┐
+app-admin   ──┼──► packages/schemas
+app-server  ──┘
+
+app-client  ──X──► app-server     (HTTP only — no source imports)
+app-admin   ──X──► app-server     (HTTP only)
+app-client  ──X──► app-admin      (no cross-frontend imports)
+app-admin   ──X──► app-client
+packages    ──X──► apps           (libs never import apps)
+```
+
+- Apps communicate over HTTP — never import source from another app.
+- Shared types, Zod schemas, and `*Example` meta objects live in `@stack/schemas` only. See `naming-conventions.mdc`, `backend/validation.mdc`, `backend/api-docs.mdc`.
+- **NEVER** duplicate a schema or API contract inside any app when it belongs in `packages/schemas`.
+
+## Nx Tags & Module Boundaries
+
+Every project declares tags in `project.json`. Enforce via `@nx/eslint-plugin` `enforce-module-boundaries`:
+
+| Tag            | Projects                                | May depend on                       |
+| -------------- | --------------------------------------- | ----------------------------------- |
+| `type:app`     | `app-client`, `app-admin`, `app-server` | `type:lib`                          |
+| `type:lib`     | `schemas`, …                            | `type:lib` with `scope:shared` only |
+| `scope:client` | `app-client`                            | `scope:shared`                      |
+| `scope:admin`  | `app-admin`                             | `scope:shared`                      |
+| `scope:server` | `app-server`                            | `scope:shared`                      |
+| `scope:shared` | `schemas`, …                            | `scope:shared`                      |
+
+```json
+// apps/app-client/project.json
+{ "tags": ["type:app", "scope:client"] }
+
+// apps/app-admin/project.json
+{ "tags": ["type:app", "scope:admin"] }
+
+// apps/app-server/project.json
+{ "tags": ["type:app", "scope:server"] }
+
+// packages/schemas/project.json
+{ "tags": ["type:lib", "scope:shared"] }
+```
+
+- **NEVER** add a dependency that violates tags — fix the architecture instead of disabling the lint rule.
+- **NEVER** use generic scopes like `@repo/` — workspace packages use `@stack/{package}`. See `naming-conventions.mdc`.
+- Frontends (`scope:client`, `scope:admin`) **cannot** depend on each other or on `scope:server`.
+
+## Shared Package: `@stack/schemas`
+
+```text
+packages/schemas/
+├── src/
+│   ├── index.ts              # Public barrel — sole entry for consumers
+│   ├── user.ts               # UserSchema, User, UserExample, CreateUserSchema, …
+│   └── auth.ts
+├── project.json
+└── package.json              # "name": "@stack/schemas"
+```
+
+- Export schemas, inferred types, and `*Example` meta objects from `src/index.ts`.
+- **NEVER** export internals — one barrel, named exports only.
+- All three apps depend on `@stack/schemas` via workspace dependency — not relative paths like `../../packages/schemas`.
+- When changing a schema, verify **app-client**, **app-admin**, and **app-server** still build and test before merging.
+
+## TypeScript Path Mapping
+
+- App-internal aliases (`@/`) are configured per app — point to that app's `src/`.
+- Cross-project imports use the package name: `import { UserSchema } from "@stack/schemas"`.
+- Register workspace paths in root `tsconfig.base.json` — **NEVER** deep-link across projects with relative `../../` paths.
+
+## Running Tasks
+
+Use `nx` — not raw `npm run` inside app folders (except when debugging a single script intentionally).
+
+```bash
+# Single project
+nx build app-client
+nx build app-admin
+nx serve app-server
+nx test schemas
+
+# All apps
+nx run-many -t lint test build -p app-client,app-admin,app-server
+
+# Only what changed (CI and pre-push)
+nx affected -t lint test build
+```
+
+| Task                                               | When to run                                    |
+| -------------------------------------------------- | ---------------------------------------------- |
+| `nx affected -t lint`                              | Every commit — fast feedback                   |
+| `nx affected -t test`                              | Before PR — unit tests for touched projects    |
+| `nx affected -t build`                             | Before PR — compile all affected apps and libs |
+| `nx build app-client` / `app-admin` / `app-server` | When verifying a full app build                |
+
+- Configure `targetDefaults` in `nx.json` for shared `inputs`, `cache`, and `dependsOn` (e.g. `build` depends on `^build`).
+- **NEVER** skip `nx affected` in CI — run only what changed to keep pipelines fast.
+
+## Generators
+
+Use Nx generators to scaffold — match existing structure, do not hand-roll project layout:
+
+```bash
+nx g @nx/next:app app-client
+nx g @nx/next:app app-admin
+nx g @nx/nest:application app-server
+nx g @nx/js:lib schemas --directory=packages/schemas --importPath=@stack/schemas
+```
+
+- After generating, add correct tags to `project.json` immediately.
+- Align `app-client` and `app-admin` with `frontend/architecture.mdc`.
+- Align `app-server` with `backend/architecture.mdc`.
+
+## Adding Dependencies
+
+- **App runtime dependency**: add to the app's `package.json`, then install at root.
+- **Shared dev tooling** (eslint, typescript, nx): root `package.json` only.
+- **Lib consumed by apps**: add `"@stack/schemas": "workspace:*"` in the consuming app's `package.json`.
+
+- **NEVER** add a backend-only dependency to `app-client` or `app-admin`.
+- **NEVER** add a frontend-only dependency to `app-server` unless genuinely shared (rare).
+- UI libraries needed by both frontends belong in each app's `package.json` or a future shared `packages/ui` — not copied between apps.
+
+## CI
+
+```bash
+nx affected -t lint test build --base=origin/main
+```
+
+- Use [remote caching](https://nx.dev/docs/features/ci-features/remote-cache) (Nx Cloud or self-hosted) when available.
+- Fail CI if module boundary lint fails.
+- E2E runs per frontend app (`app-client-e2e`, `app-admin-e2e`) on affected projects — see `frontend/testing.mdc`, `backend/testing.mdc`.
+
+## Rules
+
+- **NEVER** import from another app's `src/` — use `@stack/*` packages or HTTP.
+- **NEVER** bypass Nx project graph with ad-hoc relative imports across `apps/` or `packages/`.
+- **NEVER** commit changes to `packages/schemas` without verifying `app-client`, `app-admin`, and `app-server` still build and test.
+- **ALWAYS** use `nx affected` locally before opening a PR.
+- **ALWAYS** add new shared contracts to `packages/schemas` first, then consume in apps.
+- `frontend/` rules apply to **both** `app-client` and `app-admin`. `backend/` rules apply to `app-server`. This file governs workspace structure and cross-project boundaries only.
